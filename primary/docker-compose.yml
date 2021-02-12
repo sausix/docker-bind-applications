@@ -1,0 +1,43 @@
+version: "2.4"
+
+services:
+  primary-dns:
+    image: sausix/bind-sql-base-alpine:nopython-latest
+    container_name: primary-dns
+    restart: always
+    networks:
+      - bind-primary
+    ports:
+# Bind on all interfaces
+      - "53:53/tcp"
+      - "53:53/udp"
+# Or bind to public interfaces only:
+#      - "${IP_PUB}:53:53/tcp"
+#      - "${IP_PUB}:53:53/udp"
+#      - "${IP6_PUB}:53:53/tcp"
+#      - "${IP6_PUB}:53:53/udp"
+# Optional rndc access from host
+#      - "127.0.0.1:953:953/tcp"
+    environment:
+      - TZ=${TZ:-}
+# To disable automatic copy into /etc/bind and /var/named
+#      - APPLY_CONFIG=no
+#      - ALLOW_RNDC=yes
+    volumes:
+      - bind-conf:/etc/bind
+      - bind-var:/var/named
+      - ./bind-config:/container/bind-config:ro
+      - ./init.d:/container/init.d:ro
+    command: ["/usr/local/sbin/named", "-g", "-u", "named"]
+#    command: ["/usr/local/sbin/named", "-f", "-u", "named", "-L", "/var/log/bind/bind.log"]
+
+networks:
+  bind-primary:
+    name: bind-primary
+#    enable_ipv6: true
+    driver_opts:
+      com.docker.network.bridge.name: br_bind_pri
+
+volumes:
+  bind-conf:
+  bind-var:
