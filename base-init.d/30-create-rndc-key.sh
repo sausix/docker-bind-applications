@@ -1,5 +1,7 @@
 #!/bin/sh +e
 
+# INFO. This file is also required to disable rndc. It will generate an "empty" config file.
+
 KEY="/etc/bind/rndc.key"
 CONF="/etc/bind/rndc.conf"
 INCLUDE="/etc/bind/named.rndc.conf"
@@ -43,12 +45,15 @@ controls {
 EOF
 	else
 		# Key missing
-		echo "Missing 'rndc.key' file. May be enable by setting RNDC_KEY_GENERATE to 'yes' to generate it."
-		echo "rndc access will be disabled."
+		echo "Missing 'rndc.key' file. May be enable by setting RNDC_KEY_GENERATE to 'yes' to generate it." >&2
+		echo "rndc access will be disabled." >&2
 		echo "# rndc access disabled by create-rndc-key.sh because of missing rndc.key." > "$INCLUDE"
 	fi
 else
-	echo "# rndc access disabled by create-rndc-key.sh because ALLOW_RNDC was not set to 'yes'." > "$INCLUDE"
+	echo "# rndc access disabled by create-rndc-key.sh because ALLOW_RNDC was not set to 'yes'.
+# 'controls' must be set to empty or auto config occurs by named.
+controls { };
+" > "$INCLUDE"
 fi
 
 
