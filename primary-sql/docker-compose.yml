@@ -1,12 +1,12 @@
 version: "2.4"
 
 services:
-  secondary-dns:
-    image: sausix/bind-sql-base-alpine:nopython-latest
-    container_name: dns-secondary-auto
+  primary-dns:
+    image: sausix/bind-sql-base-alpine:9.18.14
+    container_name: dns-primary-sql
     restart: always
     networks:
-      - bind-secondary
+      - bind-primary
     ports:
 # Bind on all interfaces
       - "53:53/tcp"
@@ -20,20 +20,25 @@ services:
 #      - "127.0.0.1:953:953/tcp"
     environment:
       - TZ=${TZ:-}
-      - PRIMARY=192.168.51.10
-      - PRIMARY_ZONES=example.com,example2.com
-    tmpfs:
-      - /etc/bind
-      - /var/named
+# To disable automatic copy into /etc/bind and /var/named
+#      - APPLY_CONFIG=no
+#      - ALLOW_RNDC=yes
     volumes:
+      - bind-conf:/etc/bind
+      - bind-var:/var/named
       - ./bind-config:/container/bind-config:ro
       - ./init.d:/container/init.d:ro
+      - /run/mysqld.sock:/run/mysqld.sock
     command: ["/usr/local/sbin/named", "-g", "-u", "named"]
 #    command: ["/usr/local/sbin/named", "-f", "-u", "named", "-L", "/var/log/bind/bind.log"]
 
 networks:
-  bind-secondary:
-    name: bind-secondary
+  bind-primary:
+    name: bind-primary
 #    enable_ipv6: true
     driver_opts:
-      com.docker.network.bridge.name: br_bind_sec
+      com.docker.network.bridge.name: br_bind_pri
+
+volumes:
+  bind-conf:
+  bind-var:
